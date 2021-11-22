@@ -17,6 +17,9 @@ class Board {
             for(int i = 0; i < 7; i++) {
                 tops[i] = -1;
                 children[i] = nullptr;
+                for(int j = 0; j < 6; j++) {
+                    peices[j][i] = ' ';
+                }
             }
             parent = nullptr;
             valueForRed = valueForYel = 0;
@@ -31,29 +34,90 @@ class Board {
             for(int i = 0; i < 7; i++) {
                 tops[i] = p.tops[i];
                 children[i] = nullptr;
+                for(int j = 0; j < 6; j++) {
+                    peices[j][i] = p.peices[j][i];
+                }
             }
         }
 
         void generateChildren() {
+            hasChildren = true;
             int T = turn + 1;
             for(int i = 0; i < 7; i++)
             {
-                Board *Temp = new Board(*this, this);
+                if(tops[i] < 6) {
+                    Board *Temp = new Board(*this, this);
+                }
+                else{children[i] = nullptr;}
             }
         }
-        int evaluateBoard(int Player){
-            //one point for every available line to win, one point for every peice on that like in your color
-            int totalForWhite = 0, totalForBlack = 0;
-            
-            
-            for(int i = 0; i < 4; i++) {
+        void evaluateBoard(){
+            //I would love to think of a cleaner way to do this but for the life of me I can't figure one out
+            int TotalForRed = 0, TotalForYel = 0;
+            for(int i = 0; i < 7; i++) {
+                char Owner = ' ';
+                if(tops[i] >= 0) {
+                    Owner = peices[tops[i]][i];
+                    int diagUL = 0, diagDL = 0, diagUR = 0, diagDR = 0, Left = 0, Right = 0, Up = 0, Down = 0;
+                    if(Owner != ' ') {
+                        for(int j = 1; j < 3; j++) {
+                            if((i + j) < 7) { //right
+                                if(peices[tops[i]][i + j] == Owner) {Right++;}
+                                else if(peices[tops[i]][i + j] != ' ') {Right = -4;}
+                            }
+                            if((i - j) >= 0) { //left
+                                if(peices[tops[i]][i - j] == Owner) {Left++;}
+                                else if(peices[tops[i]][i - j] != ' ') {Left = -4;}
+                            }
+                            if((tops[i] + j) < 6) { //Up
+                                if(peices[tops[i] + j][i] == Owner) {Up++;}
+                                else if(peices[tops[i] + j][i] != ' ') {Up = -4;}
+                            }
+                            if((tops[i] + j) >= 0) { //down
+                                if(peices[tops[i] - j][i] == Owner) {Down++;}
+                                else if(peices[tops[i] - j][i] != ' ') {Down = -4;}
+                            }
+                            if(((i + j) < 7) && ((tops[i] + j) < 6)) { //diag Up and Right
+                                if(peices[tops[i] + j][i + j] == Owner) {diagUR++;}
+                                else if(peices[tops[i] + j][i + j] != ' ') {diagUR = -4;}
+                            }
+                            if(((i + j) < 7) && ((tops[i] - j) >= 0))  { //Down and Right
+                                if(peices[tops[i] - j][i + j] == Owner) {diagDR++;}
+                                else if(peices[tops[i] - j][i + j] != ' ') {diagDR = -4;}
+                            }
+                            if(((i - j) >= 0) && ((tops[i] + j) < 6)) { //Up and Left
+                                if(peices[tops[i] + j][i - j] == Owner) {diagUL++;}
+                                else if(peices[tops[i] + j][i - j] != ' ') {diagUL = -4;}
+                            }
+                            if(((i - j) >= 0) && ((tops[i] - j) >= 0))  { //down and left
+                                if(peices[tops[i] - j][i - j] == Owner) {diagDL++;}
+                                else if(peices[tops[i] - j][i - j] != ' ') {diagDL = -4;}
+                            }
+                        }
+                        if(diagUL == 3 || diagDL == 3 || diagUR == 3 || diagDR == 3 || Left == 3 || Right == 3 || Up == 3 || Down == 3) { // if any of these are 3 then it's a connect 4, winning moves have maximum value
+                            if(Owner == 'W') {
+                                valueForYel = INT_MAX;
+                                valueForRed = 0;
+                            }
+                            if(Owner == 'B') {
+                                valueForYel = 0;
+                                valueForRed = INT_MAX;
+                            }
+                            return;
+                        }
+                        if(Owner == 'W') {
+                            TotalForYel += diagUL + diagDL + diagUR + diagDR + Left + Right + Up + Down;
+                        }
+                        if(Owner == 'B') {
+                            TotalForRed += diagUL + diagDL + diagUR + diagDR + Left + Right + Up + Down;
+                        }
+                    }
+                }
             }
-
-            //if 4 in row return int_max
-            if(/*4 in a row*/false) {
-                return INT_MAX * (((Player % 2) * -2) + 1);
-            }
-
+            
+            valueForYel = TotalForYel;
+            valueForRed = TotalForRed;
+            return;
         }
         void scanPos(int X, int Y) {
             int totalForWhite, totalForBlack;
