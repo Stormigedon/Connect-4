@@ -9,11 +9,13 @@ class Board {
         Board *parent;
         int turn;
         bool hasChildren;
+        bool isEvaluated;
     public:
         int valueForRed;
         int valueForYel;
 
         Board(){
+
             for(int i = 0; i < 7; i++) {
                 tops[i] = -1;
                 children[i] = nullptr;
@@ -24,9 +26,7 @@ class Board {
             parent = nullptr;
             valueForRed = valueForYel = 0;
         }
-        Board(char iPeices[6][7], int T, char iTops[], Board P){
-            
-        }
+
         Board(Board& p, Board* Parent){
             parent = Parent;
             turn = p.turn;
@@ -52,6 +52,7 @@ class Board {
             }
         }
         void evaluateBoard(){
+            this->isEvaluated = true;
             //I would love to think of a cleaner way to do this but for the life of me I can't figure one out
             int TotalForRed = 0, TotalForYel = 0;
             for(int i = 0; i < 7; i++) {
@@ -159,16 +160,22 @@ class Board {
             }
             outS<<(char)200<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)188<<std::endl;
         }
-
+        int getValueFor(int T) {
+            if(!isEvaluated) {this->evaluateBoard();}
+            if(T % 2 == 0) {
+                return valueForRed;
+            }
+            return valueForYel;
+        }
         /**
-         * @brief Black attempts to minimize, white to maximize
+         * @brief Red attempts to minimize, Yellow to maximize
          * 
          * @param board is the board being evaluated
          * @param depth is the Maximun depth to Travel from this board
          * @param turn is the current turn at this board
          */
         static int miniMax(Board *board, int depth, int turn){
-            if (depth == 0) {return board->evaluateBoard(turn);}
+            if (depth == 0) {return board->getValueFor(turn);}
             if(!board->hasChildren) {board->generateChildren();}
 
             int Max, Min, A;
