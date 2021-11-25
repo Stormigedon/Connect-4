@@ -3,24 +3,25 @@
 
 class Board {
     private:
-        char peices[6][7];
+        char pieces[6][7];
         char tops[7]; //contains the index of the top most filled spot in each colomn
         Board *children[7];
         Board *parent;
-        int turn;
+
         bool hasChildren;
         bool isEvaluated;
     public:
+        int turn;
         int valueForRed;
         int valueForYel;
 
         Board(){
-
             for(int i = 0; i < 7; i++) {
+                isEvaluated = false;
                 tops[i] = -1;
                 children[i] = nullptr;
                 for(int j = 0; j < 6; j++) {
-                    peices[j][i] = ' ';
+                    pieces[j][i] = ' ';
                 }
             }
             parent = nullptr;
@@ -28,6 +29,7 @@ class Board {
         }
 
         Board(Board& p, Board* Parent){
+            isEvaluated = false;
             parent = Parent;
             turn = p.turn;
 
@@ -35,108 +37,127 @@ class Board {
                 tops[i] = p.tops[i];
                 children[i] = nullptr;
                 for(int j = 0; j < 6; j++) {
-                    peices[j][i] = p.peices[j][i];
+                    pieces[j][i] = p.pieces[j][i];
                 }
             }
         }
 
         void generateChildren() {
+            //if(hasChildren) return;
             hasChildren = true;
             int T = turn + 1;
             for(int i = 0; i < 7; i++)
             {
                 if(tops[i] < 6) {
                     Board *Temp = new Board(*this, this);
+                    Temp->makeMove(i,T);
+                    children[i] = Temp;
                 }
                 else{children[i] = nullptr;}
             }
         }
-        void evaluateBoard(){
+        int evaluateBoard(){
+            if(this->isEvaluated) return this->valueForYel - this->valueForRed;
             this->isEvaluated = true;
-            //I would love to think of a cleaner way to do this but for the life of me I can't figure one out
+
             int TotalForRed = 0, TotalForYel = 0;
             for(int i = 0; i < 7; i++) {
                 char Owner = ' ';
                 if(tops[i] >= 0) {
-                    Owner = peices[tops[i]][i];
-                    int diagUL = 0, diagDL = 0, diagUR = 0, diagDR = 0, Left = 0, Right = 0, Up = 0, Down = 0;
-                    if(Owner != ' ') {
-                        for(int j = 1; j < 3; j++) {
-                            if((i + j) < 7) { //right
-                                if(peices[tops[i]][i + j] == Owner) {Right++;}
-                                else if(peices[tops[i]][i + j] != ' ') {Right = -4;}
+                    for(int j = 0; j < tops[i] - 1; j++) {
+                        Owner = this->pieces[j][i];
+                        unsigned char isAlive = 15;
+                        int R = 1, U = 1, UR = 1, UL = 1;
+                        for(int k = 1; k < 4; k++) {
+                            int dX = i + k;
+                            int dY = j + k;
+                            if ((dX < 7) && ((isAlive & 1) != 0)) { //right
+                                if(Owner == pieces[j][dX]) {
+                                    R++;
+                                }
+                                else if(pieces[j][dX] != ' ') { //must Be the opposing player
+                                    isAlive = isAlive & ~1;
+                                }
                             }
-                            if((i - j) >= 0) { //left
-                                if(peices[tops[i]][i - j] == Owner) {Left++;}
-                                else if(peices[tops[i]][i - j] != ' ') {Left = -4;}
+                            if ((dY < 6) && ((isAlive & 2) != 0)) { //up
+                                if(Owner == pieces[dY][i]) {
+                                    U++;
+                                }
+                                else if(pieces[dY][i] != ' ') { //must Be the opposing player
+                                    isAlive = isAlive & ~2;
+                                }
                             }
-                            if((tops[i] + j) < 6) { //Up
-                                if(peices[tops[i] + j][i] == Owner) {Up++;}
-                                else if(peices[tops[i] + j][i] != ' ') {Up = -4;}
+                            if ((dY < 6) && (dX < 7) && ((isAlive & 4) != 0)) { //diagnal up and right
+                                if(Owner == pieces[dY][dX]) {
+                                    UR++;
+                                }
+                                else if(pieces[dY][dX] != ' ') { //must Be the opposing player
+                                    isAlive = isAlive & ~4;
+                                }
                             }
-                            if((tops[i] + j) >= 0) { //down
-                                if(peices[tops[i] - j][i] == Owner) {Down++;}
-                                else if(peices[tops[i] - j][i] != ' ') {Down = -4;}
+                            dX = i - k;
+                            dY = j + k;
+                            if ((dY < 6) && (dX >= 0) && ((isAlive & 8) != 0)) { //diagnal up and left
+                                if(Owner == pieces[dY][dX]) {
+                                    UL++;
+                                }
+                                else if(pieces[dY][dX] != ' ') { //must Be the opposing player
+                                    isAlive = isAlive & ~8;
+                                }
                             }
-                            if(((i + j) < 7) && ((tops[i] + j) < 6)) { //diag Up and Right
-                                if(peices[tops[i] + j][i + j] == Owner) {diagUR++;}
-                                else if(peices[tops[i] + j][i + j] != ' ') {diagUR = -4;}
-                            }
-                            if(((i + j) < 7) && ((tops[i] - j) >= 0))  { //Down and Right
-                                if(peices[tops[i] - j][i + j] == Owner) {diagDR++;}
-                                else if(peices[tops[i] - j][i + j] != ' ') {diagDR = -4;}
-                            }
-                            if(((i - j) >= 0) && ((tops[i] + j) < 6)) { //Up and Left
-                                if(peices[tops[i] + j][i - j] == Owner) {diagUL++;}
-                                else if(peices[tops[i] + j][i - j] != ' ') {diagUL = -4;}
-                            }
-                            if(((i - j) >= 0) && ((tops[i] - j) >= 0))  { //down and left
-                                if(peices[tops[i] - j][i - j] == Owner) {diagDL++;}
-                                else if(peices[tops[i] - j][i - j] != ' ') {diagDL = -4;}
-                            }
-                        }
-                        if(diagUL == 3 || diagDL == 3 || diagUR == 3 || diagDR == 3 || Left == 3 || Right == 3 || Up == 3 || Down == 3) { // if any of these are 3 then it's a connect 4, winning moves have maximum value
-                            if(Owner == 'W') {
-                                valueForYel = INT_MAX;
-                                valueForRed = 0;
-                            }
-                            if(Owner == 'B') {
-                                valueForYel = 0;
-                                valueForRed = INT_MAX;
-                            }
-                            return;
-                        }
-                        if(Owner == 'W') {
-                            TotalForYel += diagUL + diagDL + diagUR + diagDR + Left + Right + Up + Down;
                         }
                         if(Owner == 'B') {
-                            TotalForRed += diagUL + diagDL + diagUR + diagDR + Left + Right + Up + Down;
+                            if ((isAlive & 1) != 0) { //right
+                                TotalForRed += (R - 1);
+                            }
+                            if ((isAlive & 2) != 0) { //up
+                                TotalForRed += (U - 1);
+                            }
+                            if ((isAlive & 4) != 0) { //diagnal up and right
+                                TotalForRed += (UR - 1);
+                            }
+                            if ((isAlive & 8) != 0) { //diagnal up and left
+                                TotalForRed += (UL - 1);
+                            }
+                            if(R == 4 || U == 4 || UR == 4 || UL == 4) {
+                                TotalForRed = INT_MAX;
+                            }
+                        } else {
+                            if ((isAlive & 1) != 0) { //right
+                                TotalForYel += (R - 1);
+                            }
+                            if ((isAlive & 2) != 0) { //up
+                                TotalForYel += (U - 1);
+                            }
+                            if ((isAlive & 4) != 0) { //diagnal up and right
+                                TotalForYel += (UR - 1);
+                            }
+                            if ((isAlive & 8) != 0) { //diagnal up and left
+                                TotalForYel += (UL - 1);
+                            }
+                            if(R == 4 || U == 4 || UR == 4 || UL == 4) {
+                                TotalForYel = INT_MAX;
+                            }
                         }
                     }
                 }
             }
-            
-            valueForYel = TotalForYel;
-            valueForRed = TotalForRed;
-            return;
+
+            this->valueForYel = TotalForYel;
+            this->valueForRed = TotalForRed;
+
+            return TotalForYel - TotalForRed;
         }
-        void scanPos(int X, int Y) {
-            int totalForWhite, totalForBlack;
-            for(int i = 1; i < 4; i++)
-            {
-                if(X-i >= 0) {
-                    char left = peices[Y][X-i];
-                }
-            }
-        }
+
         bool makeMove(int i, int t) {
             if(i >= 0 && i < 7) {
                 if(this->tops[i] < 6) {
+                    tops[i]++;
                     if((t % 2) == 0) {
-                        this->peices[tops[i] + 1][i] = 'B';
+                        this->pieces[tops[i]][i] = 'W';
                         return true;
                     }
-                    this->peices[tops[i] + 1][i] = 'W';
+                    this->pieces[tops[i]][i] = 'B';
                     return true;
                 }
             }
@@ -155,18 +176,29 @@ class Board {
                     if(B[5-i][j] != ' ')
                         outS<<B[5-i][j];
                     else
-                        outS<<i;
+                        outS<<i; 
                 }outS<<thick<<std::endl;;
             }
             outS<<(char)200<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)188<<std::endl;
         }
-        int getValueFor(int T) {
-            if(!isEvaluated) {this->evaluateBoard();}
-            if(T % 2 == 0) {
-                return valueForRed;
+        static void drawBoard(Board& B, std::ostream& outS){
+            char cross = 215;
+            char thin = 196;
+            char thick = 186;
+            outS<<std::endl;
+            for(int i = 0; i < 6; i++) {
+                outS<<(char)199<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<(char)182<<std::endl;
+                for(int j = 0; j < 7; j++) {
+                    outS<<thick;
+                    //if(B.pieces[5-i][j] != ' ')
+                        outS<<B.pieces[5-i][j];
+                    /* else
+                        outS<<i; */
+                }outS<<thick<<std::endl;;
             }
-            return valueForYel;
+            outS<<(char)200<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)188<<std::endl;
         }
+
         /**
          * @brief Red attempts to minimize, Yellow to maximize
          * 
@@ -175,7 +207,7 @@ class Board {
          * @param turn is the current turn at this board
          */
         static int miniMax(Board *board, int depth, int turn){
-            if (depth == 0) {return board->getValueFor(turn);}
+            if (depth == 0) {return board->evaluateBoard();}
             if(!board->hasChildren) {board->generateChildren();}
 
             int Max, Min, A;
@@ -190,5 +222,42 @@ class Board {
                 return Min;
             }
             return Max;
+        }
+
+        static int miniMaxAlphaBeta(Board *board, int depth, int turn, int Alpha, int Beta){
+            if (depth == 0) {return board->evaluateBoard();}
+            if(!board->hasChildren) {board->generateChildren();}
+
+            int Max, Min, A;
+            for(int i = 0; i < 7; i++) {
+                if(board->children[i] != nullptr) {
+                    A = miniMax(board->children[i], depth - 1, turn + 1);
+                    Min = (A < Min) ? A : Min;
+                    Max = (A > Max) ? A : Max;
+                }
+            }
+            if((turn % 2) == 0) {
+                return Min;
+            }
+            return Max;
+        }
+
+        static int pickMove(Board& board,int turn) {
+            board.generateChildren();
+            int Max, Min, A;
+            int minDex, MaxDex;
+            for(int i = 0; i < 7; i++) {
+                if(board.children[i] != nullptr) {
+                    A = board.miniMax(board.children[i], 7, turn + 1);
+                    Min = (A < Min) ? A : Min;
+                    Max = (A > Max) ? A : Max;
+                    minDex = (A < Min) ? A : minDex;
+                    MaxDex = (A > Max) ? A : MaxDex;
+                }
+            }
+            if((turn % 2) == 0) {
+                return minDex;
+            }
+            return MaxDex;
         }
 };
