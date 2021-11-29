@@ -217,7 +217,7 @@ class Board {
             }
             if(!board->hasChildren) {board->generateChildren();}
 
-            int Max, Min, A;
+            int Max = -INT_MAX, Min = INT_MAX, A;
             for(int i = 0; i < 7; i++) {
                 if(board->children[i] != nullptr) {
                     A = miniMax(board->children[i], depth - 1, turn + 1);
@@ -262,7 +262,7 @@ class Board {
                     MaxDex = (A > Max) ? A : MaxDex;
                 }
             }
-            std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation"<<Min<<std::endl;
+            std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation: "<<Min<<std::endl;
             if((turn % 2) == 0) {
                 return minDex;
             }
