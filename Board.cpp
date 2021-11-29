@@ -235,7 +235,7 @@ class Board {
             if (depth == 0) {return board->evaluateBoard();}
             if(!board->hasChildren) {board->generateChildren();}
 
-            int Max, Min, A;
+            int Max = -INT_MAX, Min = INT_MAX, A;
             for(int i = 0; i < 7; i++) {
                 if(board->children[i] != nullptr) {
                     A = miniMax(board->children[i], depth - 1, turn + 1);
@@ -251,7 +251,7 @@ class Board {
 
         static int pickMove(Board& board,int turn) {
             board.generateChildren();
-            int Max, Min, A;
+            int Max = -INT_MAX, Min = INT_MAX, A;
             int minDex, MaxDex;
             for(int i = 0; i < 7; i++) {
                 if(board.children[i] != nullptr) {
