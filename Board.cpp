@@ -17,7 +17,6 @@ class Board {
 
         Board(){
             for(int i = 0; i < 7; i++) {
-                isEvaluated = false;
                 tops[i] = -1;
                 children[i] = nullptr;
                 for(int j = 0; j < 6; j++) {
@@ -26,10 +25,13 @@ class Board {
             }
             parent = nullptr;
             valueForRed = valueForYel = 0;
+            hasChildren = false;
+            isEvaluated = false;
         }
 
         Board(Board& p, Board* Parent){
             isEvaluated = false;
+            hasChildren = false;
             parent = Parent;
             turn = p.turn;
 
@@ -50,6 +52,7 @@ class Board {
             {
                 if(tops[i] < 6) {
                     Board *Temp = new Board(*this, this);
+                    Temp->turn++;
                     Temp->makeMove(i,T);
                     children[i] = Temp;
                 }
@@ -151,8 +154,9 @@ class Board {
 
         bool makeMove(int i, int t) {
             if(i >= 0 && i < 7) {
-                if(this->tops[i] < 6) {
+                if(this->tops[i] < 5) {
                     tops[i]++;
+                    //int shananagans = tops[i]; // some crafty shenanagains was happening with this->pieces[top[i]][i] setting the value of top[i] insteads, this should fix that.  Better men than I will have to figure out why
                     if((t % 2) == 0) {
                         this->pieces[tops[i]][i] = 'W';
                         return true;
@@ -160,6 +164,7 @@ class Board {
                     this->pieces[tops[i]][i] = 'B';
                     return true;
                 }
+                else {return false;}
             }
             return false;
         }
@@ -207,7 +212,9 @@ class Board {
          * @param turn is the current turn at this board
          */
         static int miniMax(Board *board, int depth, int turn){
-            if (depth == 0) {return board->evaluateBoard();}
+            if (depth == 0) {
+                return board->evaluateBoard();
+            }
             if(!board->hasChildren) {board->generateChildren();}
 
             int Max, Min, A;
@@ -248,13 +255,14 @@ class Board {
             int minDex, MaxDex;
             for(int i = 0; i < 7; i++) {
                 if(board.children[i] != nullptr) {
-                    A = board.miniMax(board.children[i], 7, turn + 1);
+                    A = board.miniMax(board.children[i], 7, turn+1);
                     Min = (A < Min) ? A : Min;
                     Max = (A > Max) ? A : Max;
                     minDex = (A < Min) ? A : minDex;
                     MaxDex = (A > Max) ? A : MaxDex;
                 }
             }
+            std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation"<<Min<<std::endl;
             if((turn % 2) == 0) {
                 return minDex;
             }

@@ -18,9 +18,7 @@ int main(){
     std::string PositiveReplys [] = {"yes","y","yeah","affirmative","okay","yea","all" "right","aye","by all means","certainly","definitely","gladly","indubitably","sure","undoubtedly","unquestionably"};
     bool good = false;
     for(int i = 0; i < 16; i++){
-        //std::cout<<"Checking Reply "<<PositiveReplys[i];
         if(Response == PositiveReplys[i]) {good = true; break;}
-        //std::cout<<std::endl;
     }
     if(!good){std::cout<<"That's a shame"<<std::endl;return 0;}
 
@@ -31,23 +29,23 @@ int main(){
     int players = 0;
     if(Response == "1" || Response == "one") {players = 1;}
     else {players = 2;}
+    int A = 0;
     
     while(input != 'Q' && input != 'q') {
         if(board.turn % 2 == 0) {
-            std::cout<<"It is WHITE'S turn, enter a number between 1 and 7 to drop your piece. enter q to quit"<<std::endl;
-            Board::drawBoard(board,std::cout);
-            std::cin.clear();
+            //std::cout<<"It is WHITE'S turn, enter a number between 1 and 7 to drop your piece. enter q to quit"<<std::endl;
+            //Board::drawBoard(board,std::cout);
+            //std::cin.clear();
             //input = std::cin.get();
-            std::cin.clear();
-            std::cin.ignore(INT_MAX,'\n');
-            int A = (input - 48) - 1;
-            A = 0;
+            //std::cin.clear();
+            //std::cin.ignore(INT_MAX,'\n');
+            //A = (input - 48) - 1;
+            A = (A + 1) % 7;
             board.makeMove(A,board.turn);
         }
         else {
             std::cout<<"It is BLACK'S turn, enter a number between 1 and 7 to drop your piece. enter q to quit"<<std::endl;
             Board::drawBoard(board,std::cout);
-            int A;
             if(players == 2) {
                 std::cin.clear();
                 input = std::cin.get();
