@@ -1,5 +1,6 @@
 //Board class
 #include <iostream>
+#include <cmath>
 
 class Board {
     private:
@@ -215,8 +216,8 @@ class Board {
             if (depth == 0) {
                 return board->evaluateBoard();
             }
+            if(std::abs(board->evaluateBoard()) > 1000) {return board->evaluateBoard();}
             if(!board->hasChildren) {board->generateChildren();}
-
             int Max = -INT_MAX, Min = INT_MAX, A;
             for(int i = 0; i < 7; i++) {
                 if(board->children[i] != nullptr) {
