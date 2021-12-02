@@ -216,7 +216,9 @@ class Board {
             if (depth == 0) {
                 return board->evaluateBoard();
             }
-            if(std::abs(board->evaluateBoard()) > 1000) {return board->evaluateBoard();}
+            if(std::abs(board->evaluateBoard()) > 1000) {
+                return board->evaluateBoard();
+            }
             if(!board->hasChildren) {board->generateChildren();}
             int Max = -INT_MAX, Min = INT_MAX, A;
             for(int i = 0; i < 7; i++) {
@@ -257,10 +259,14 @@ class Board {
             for(int i = 0; i < 7; i++) {
                 if(board.children[i] != nullptr) {
                     A = board.miniMax(board.children[i], 7, turn+1);
-                    Min = (A < Min) ? A : Min;
-                    Max = (A > Max) ? A : Max;
-                    minDex = (A < Min) ? A : minDex;
-                    MaxDex = (A > Max) ? A : MaxDex;
+                    if(A < Min) {
+                        Min = A;
+                        minDex = i;
+                    }
+                    if(A > Min) {
+                        Max = A;
+                        MaxDex = i;
+                    }
                 }
             }
             std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation: "<<Min<<std::endl;
