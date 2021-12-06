@@ -1,7 +1,7 @@
 //Board class
-#include <iostream>
-#include <cmath>
-
+#include <iostream> // cout
+#include <cmath> // abs
+#include <assert.h> //for debuging
 class Board {
     private:
         char pieces[6][7];
@@ -48,27 +48,32 @@ class Board {
         void generateChildren() {
             //if(hasChildren) return;
             hasChildren = true;
-            int T = turn + 1;
             for(int i = 0; i < 7; i++)
             {
                 if(tops[i] < 6) {
                     Board *Temp = new Board(*this, this);
                     Temp->turn++;
-                    Temp->makeMove(i,T);
+                    Temp->makeMove(i,this->turn);
                     children[i] = Temp;
+                    //drawBoard( *Temp,std::cout); // debug
+                    //std::cout<<"Board Valued at: "<<Temp->evaluateBoard();
                 }
-                else{children[i] = nullptr;}
+                else {
+                    children[i] = nullptr;
+                    //std::cout<<"No child at column " << i <<std::endl;
+                }
             }
         }
         int evaluateBoard(){
-            if(this->isEvaluated) return this->valueForYel - this->valueForRed;
+            if(this->isEvaluated) return this->valueForRed - this->valueForYel;
             this->isEvaluated = true;
 
             int TotalForRed = 0, TotalForYel = 0;
             for(int i = 0; i < 7; i++) {
                 char Owner = ' ';
                 if(tops[i] >= 0) {
-                    for(int j = 0; j < tops[i] - 1; j++) {
+                    assert(tops[i] < 6);
+                    for(int j = 0; j < tops[i] + 1; j++) {
                         Owner = this->pieces[j][i];
                         unsigned char isAlive = 15;
                         int R = 1, U = 1, UR = 1, UL = 1;
@@ -150,14 +155,14 @@ class Board {
             this->valueForYel = TotalForYel;
             this->valueForRed = TotalForRed;
 
-            return TotalForYel - TotalForRed;
+            return TotalForRed - TotalForYel ;
         }
 
         bool makeMove(int i, int t) {
             if(i >= 0 && i < 7) {
                 if(this->tops[i] < 5) {
+                    this->isEvaluated = false;
                     tops[i]++;
-                    //int shananagans = tops[i]; // some crafty shenanagains was happening with this->pieces[top[i]][i] setting the value of top[i] insteads, this should fix that.  Better men than I will have to figure out why
                     if((t % 2) == 0) {
                         this->pieces[tops[i]][i] = 'W';
                         return true;
@@ -171,38 +176,27 @@ class Board {
         }
 
         static void drawBoard(char B[6][7], std::ostream& outS){
+            /* char cross = '#';//215;
+            char thin = '#'; //196;
+            char thick = '#'; //186; */
             char cross = 215;
             char thin = 196;
             char thick = 186;
             outS<<std::endl;
             for(int i = 0; i < 6; i++) {
                 outS<<(char)199<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<(char)182<<std::endl;
+                //outS<<"#"<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<"#"<<std::endl;
                 for(int j = 0; j < 7; j++) {
                     outS<<thick;
-                    if(B[5-i][j] != ' ')
-                        outS<<B[5-i][j];
-                    else
-                        outS<<i; 
-                }outS<<thick<<std::endl;;
+                    outS<<B[5-i][j];
+                }
+                outS<<thick<<std::endl;;
             }
             outS<<(char)200<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)188<<std::endl;
+            outS<<" 1 2 3 4 5 6 7 "<<std::endl;
         }
         static void drawBoard(Board& B, std::ostream& outS){
-            char cross = 215;
-            char thin = 196;
-            char thick = 186;
-            outS<<std::endl;
-            for(int i = 0; i < 6; i++) {
-                outS<<(char)199<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<cross<<thin<<(char)182<<std::endl;
-                for(int j = 0; j < 7; j++) {
-                    outS<<thick;
-                    //if(B.pieces[5-i][j] != ' ')
-                        outS<<B.pieces[5-i][j];
-                    /* else
-                        outS<<i; */
-                }outS<<thick<<std::endl;;
-            }
-            outS<<(char)200<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)202<<(char)205<<(char)188<<std::endl;
+            drawBoard(B.pieces,outS);
         }
 
         /**
@@ -234,6 +228,33 @@ class Board {
             return Max;
         }
 
+        static int pickMove(Board& board,int turn) {
+            if(turn == 5) {
+                turn = 5;
+            }
+            board.generateChildren();
+            int Max = -INT_MAX, Min = INT_MAX, A;
+            int minDex, maxDex;
+            for(int i = 0; i < 7; i++) {
+                if(board.children[i] != nullptr) {
+                    A = board.miniMax(board.children[i], 4, turn+1);
+                    if(A < Min) {
+                        Min = A;
+                        minDex = i;
+                    }
+                    if(A > Max) {
+                        Max = A;
+                        maxDex = i;
+                    }
+                }
+            }
+            //std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation: "<<Min<<std::endl; //for debuging
+            if((turn % 2) == 0) {
+                return minDex;
+            }
+            return maxDex;
+        }
+
         static int miniMaxAlphaBeta(Board *board, int depth, int turn, int Alpha, int Beta){
             if (depth == 0) {return board->evaluateBoard();}
             if(!board->hasChildren) {board->generateChildren();}
@@ -250,29 +271,5 @@ class Board {
                 return Min;
             }
             return Max;
-        }
-
-        static int pickMove(Board& board,int turn) {
-            board.generateChildren();
-            int Max = -INT_MAX, Min = INT_MAX, A;
-            int minDex, MaxDex;
-            for(int i = 0; i < 7; i++) {
-                if(board.children[i] != nullptr) {
-                    A = board.miniMax(board.children[i], 7, turn+1);
-                    if(A < Min) {
-                        Min = A;
-                        minDex = i;
-                    }
-                    if(A > Min) {
-                        Max = A;
-                        MaxDex = i;
-                    }
-                }
-            }
-            std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation: "<<Min<<std::endl;
-            if((turn % 2) == 0) {
-                return minDex;
-            }
-            return MaxDex;
         }
 };
