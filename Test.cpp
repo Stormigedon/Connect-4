@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <string>
 #include "Board.cpp"
-
+#include <chrono>
 
 
 
@@ -28,6 +28,13 @@ int main(){
     int players = 0;
     if(Response == "1" || Response == "one") {players = 1;}
     else {players = 2;}
+    std::cout<<"Use alpha-beta pruning?"<<std::endl;
+    std::cin>>Response;
+    good = false;
+    bool useAlphaBeta = false;
+    for(int i = 0; i < 16; i++){
+        if(Response == PositiveReplys[i]) {useAlphaBeta = true; break;}
+    }
     std::cin.clear();
     std::cin.ignore(INT_MAX,'\n');
     int A = 0;
@@ -44,8 +51,11 @@ int main(){
             std::cin.ignore(INT_MAX,'\n');
             A = (input - 48) - 1;
             //A = ((board.turn / 2) % 7) + 1;
-            std::cout<<"White went with column "<<A+1<<std::endl;
-            board.makeMove(A,board.turn);
+            if(A >= 0 && A < 7) {
+                std::cout<<"White went with column "<<A+1<<std::endl;
+                if(!board.makeMove(A,board.turn)) {std::cout<<"Invalid move try again"<<std::endl;}
+                else {board.turn++;}
+            } else {std::cout<<"Invalid move try again"<<std::endl;}
         }
         else {
             
@@ -59,11 +69,22 @@ int main(){
                 A = (input - 48) - 1;
             }
             else {
-
-                A = Board::pickMove(board,board.turn);
+                if(useAlphaBeta) {
+                    //std::cout<<"Used AB"<<std::endl;
+                    auto start = std::chrono::steady_clock::now();
+                    A = Board::pickMoveAB(board,board.turn);
+                    auto end = std::chrono::steady_clock::now();
+                    std::cout<<"Picked move in: "<<std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()<<"ns"<<std::endl;
+                } else {
+                    auto start = std::chrono::steady_clock::now();
+                    A = Board::pickMove(board,board.turn);
+                    auto end = std::chrono::steady_clock::now();
+                    std::cout<<"Picked move in: "<<std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()<<"ns"<<std::endl;
+                }
             }
             std::cout<<"Black went with column "<<A+1<<std::endl;
             board.makeMove(A,board.turn);
+            board.turn++;
         }
         if(board.evaluateBoard() > 1000){
             Board::drawBoard(board,std::cout);
@@ -75,7 +96,6 @@ int main(){
             std::cout<<"White WINS!"<<std::endl;
             return 1;
         }
-        board.turn++;
         if (board.turn >=  43) {
             std::cout<<"DRAW!!"<<std::endl;
             return 2;

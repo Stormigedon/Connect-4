@@ -33,6 +33,9 @@
         "fstream": "cpp",
         "numeric": "cpp",
         "sstream": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "chrono": "cpp",
+        "ctime": "cpp",
+        "ratio": "cpp"
     }
 }

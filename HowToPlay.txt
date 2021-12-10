@@ -1,0 +1,6 @@
+In order to play a game run the connect4.exe
+Answer yes to play a game
+Select 1 player by entering 1
+Answer yes or no to using alpha-beta pruning
+
+Enter the column number of your desigered move.

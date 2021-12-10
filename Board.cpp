@@ -45,8 +45,18 @@ class Board {
             }
         }
 
+        ~Board() {
+            for(int i = 0; i < 7; i++) {
+                delete children[i];
+            }
+        }
+
         void generateChildren() {
-            //if(hasChildren) return;
+            if(hasChildren) {
+                for(int i = 0; i < 7; i++) {
+                    delete children[i];
+                }
+            };
             hasChildren = true;
             for(int i = 0; i < 7; i++)
             {
@@ -228,10 +238,36 @@ class Board {
             return Max;
         }
 
-        static int pickMove(Board& board,int turn) {
-            if(turn == 5) {
-                turn = 5;
+        static int miniMaxAlphaBeta(Board *board, int depth, int turn, int Alpha, int Beta){
+            if (depth == 0) {
+                return board->evaluateBoard();
             }
+            if(std::abs(board->evaluateBoard()) > 1000) {
+                return board->evaluateBoard();
+            }
+            if(!board->hasChildren) {board->generateChildren();}
+            int Max = -INT_MAX, Min = INT_MAX, A;
+            for(int i = 0; i < 7; i++) {
+                if(board->children[i] != nullptr) {
+                    A = miniMax(board->children[i], depth - 1, turn + 1);
+                    Min = (A < Min) ? A : Min;
+                    Max = (A > Max) ? A : Max;
+                    if((turn % 2) == 0) {
+                        if(A > Beta) {return A;}
+                        if(A > Alpha) {Alpha = A;}
+                    } else {
+                        if(A < Alpha) {return A;}
+                        if(A < Beta) {Beta = A;}
+                    }
+                }
+            }
+            if((turn % 2) == 0) {
+                return Min;
+            }
+            return Max;
+        }
+
+        static int pickMove(Board& board,int turn) {
             board.generateChildren();
             int Max = -INT_MAX, Min = INT_MAX, A;
             int minDex, maxDex;
@@ -255,21 +291,27 @@ class Board {
             return maxDex;
         }
 
-        static int miniMaxAlphaBeta(Board *board, int depth, int turn, int Alpha, int Beta){
-            if (depth == 0) {return board->evaluateBoard();}
-            if(!board->hasChildren) {board->generateChildren();}
-
+        static int pickMoveAB(Board& board,int turn) {
+            board.generateChildren();
             int Max = -INT_MAX, Min = INT_MAX, A;
+            int minDex, maxDex;
             for(int i = 0; i < 7; i++) {
-                if(board->children[i] != nullptr) {
-                    A = miniMax(board->children[i], depth - 1, turn + 1);
-                    Min = (A < Min) ? A : Min;
-                    Max = (A > Max) ? A : Max;
+                if(board.children[i] != nullptr) {
+                    A = board.miniMaxAlphaBeta(board.children[i], 4, turn+1,-INT_MAX,INT_MAX);
+                    if(A < Min) {
+                        Min = A;
+                        minDex = i;
+                    }
+                    if(A > Max) {
+                        Max = A;
+                        maxDex = i;
+                    }
                 }
             }
+            //std::cout<<"Max evaluation: "<<Max<<"\tMin evaluation: "<<Min<<std::endl; //for debuging
             if((turn % 2) == 0) {
-                return Min;
+                return minDex;
             }
-            return Max;
+            return maxDex;
         }
 };
